@@ -1,0 +1,68 @@
+<div class="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-8">
+  <section class="space-y-2">
+    <h2 class="text-3xl font-bold text-slate-900">Estudar</h2>
+    <p class="text-base text-slate-600">Pratique com questões adaptativas do ENEM</p>
+  </section>
+
+  <section class="grid grid-cols-1 gap-6 md:grid-cols-2">
+    @for (disciplina of disciplinasPrincipais; track disciplina.nome) {
+      <article
+        class="relative cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 pl-8 shadow-md transition hover:-translate-y-0.5 hover:shadow-xl"
+        (click)="navegarParaQuestoes(disciplina.nome)"
+      >
+        <span
+          class="absolute inset-y-0 left-0 w-2 rounded-r-full"
+          [style.backgroundColor]="disciplina.cor"
+          aria-hidden="true"
+        ></span>
+
+        <div class="flex gap-4">
+          <span
+            class="flex h-12 w-12 items-center justify-center rounded-xl text-xl text-white"
+            [style.backgroundColor]="disciplina.cor"
+          >
+            <i [class]="'pi pi-' + disciplina.icone"></i>
+          </span>
+
+          <div class="space-y-2">
+            <h3 class="text-xl font-semibold text-slate-900">{{ disciplina.nome }}</h3>
+            <p class="text-sm leading-relaxed text-slate-500">
+              {{ disciplina.descricao }}
+            </p>
+          </div>
+        </div>
+      </article>
+    }
+  </section>
+
+  @if (redacao) {
+    <section class="mx-auto w-full max-w-2xl">
+      <article
+        class="relative cursor-pointer overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 pl-8 shadow-lg transition hover:-translate-y-0.5 hover:shadow-2xl"
+        (click)="navegarParaQuestoes(redacao.nome)"
+      >
+        <span
+          class="absolute inset-y-0 left-0 w-2 rounded-r-full"
+          [style.backgroundColor]="redacao.cor"
+          aria-hidden="true"
+        ></span>
+
+        <div class="flex flex-col gap-4 md:flex-row md:items-center">
+          <span
+            class="flex h-14 w-14 items-center justify-center rounded-2xl text-2xl text-white"
+            [style.backgroundColor]="redacao.cor"
+          >
+            <i [class]="'pi pi-' + redacao.icone"></i>
+          </span>
+
+          <div class="space-y-2">
+            <h3 class="text-2xl font-semibold text-slate-900">{{ redacao.nome }}</h3>
+            <p class="text-base leading-relaxed text-slate-500">
+              {{ redacao.descricao }}
+            </p>
+          </div>
+        </div>
+      </article>
+    </section>
+  }
+</div>

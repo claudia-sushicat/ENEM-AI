@@ -1,0 +1,11 @@
+<div id="menu" class="fixed top-0 left-0 right-0 z-100 w-full flex justify-end gap-2 p-2 shadow-md" style="background-color: #10b981;">  <!-- style="background-color: #10b981;" -->
+    @if (logado) {
+        <div class="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-fit">
+            <span class="text-teal-700 font-medium">{{usuario?.nome}}</span>
+        </div>
+        <p-button label="Sair" icon="pi pi-sign-out" (click)="logout()" severity="danger" rounded="true" />
+    } @else {
+        <p-button label="Cadastrar" icon="pi pi-user-plus" (click)="cadastro()" text="true" severity="contrast" rounded="true" />
+        <p-button label="Entrar" icon="pi pi-sign-in" (click)="login()" severity="secondary" rounded="true" />
+    }
+</div>

@@ -1,0 +1,284 @@
+<div class="flex flex-col gap-8">
+  <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div class="flex flex-col gap-2">
+      <p class="text-sm font-medium uppercase tracking-wide text-slate-500">Simulador ENEM</p>
+      <h1 class="text-3xl font-semibold text-slate-900">Laboratório de Redação</h1>
+      <p class="text-base text-slate-600">
+        Gere temas inéditos alinhados às diretrizes do INEP, escreva sua redação completa e receba
+        uma correção detalhada com notas por competência, trechos citados e plano de melhoria.
+      </p>
+      <div class="flex flex-wrap gap-3 pt-2">
+        <p-button
+          label="Gerar novos temas"
+          icon="pi pi-sync"
+          [loading]="carregandoTemas"
+          (click)="carregarTemas()"
+        />
+        <!-- <p-button
+          label="Ver histórico"
+          icon="pi pi-history"
+          text="true"
+          (click)="carregarHistorico()"
+        /> -->
+      </div>
+    </div>
+  </section>
+
+  <section class="space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold text-slate-900">Temas sugeridos pelo INEP</h2>
+      @if (erroTemas) {
+        <span class="text-sm text-red-600">{{ erroTemas }}</span>
+      }
+    </div>
+
+    @if (carregandoTemas) {
+      <div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-6">
+        <p-progressSpinner styleClass="w-6 h-6" strokeWidth="4" />
+        <span class="text-sm text-slate-500">Buscando temas inéditos...</span>
+      </div>
+    } @else {
+      <div class="grid gap-4 lg:grid-cols-2">
+        @for (tema of temas; track tema.id) {
+          <article
+            class="cursor-pointer rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-blue-500 hover:shadow-lg"
+            [class.ring-2]="temaSelecionado?.id === tema.id"
+            [class.ring-blue-500]="temaSelecionado?.id === tema.id"
+            (click)="selecionarTema(tema)"
+          >
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-blue-500">
+                  Proposta {{ tema.id }}
+                </p>
+                <h3 class="mt-1 text-lg font-semibold text-slate-900">
+                  {{ tema.titulo }}
+                </h3>
+              </div>
+              <p-tag value="Inédito" severity="info" />
+            </div>
+            <p class="mt-3 text-sm text-slate-600">{{ getMensagemResumoTema(tema) }}</p>
+            @if (tema.diretrizes_intervencao) {
+              <p class="mt-3 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
+                <strong class="text-slate-900">Intervenção:</strong>
+                {{ tema.diretrizes_intervencao }}
+              </p>
+            }
+          </article>
+        }
+      </div>
+    }
+  </section>
+
+  @if (temaSelecionado) {
+    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex flex-col gap-2">
+        <p class="text-sm font-semibold text-slate-500">Tema selecionado</p>
+        <h3 class="text-2xl font-semibold text-slate-900">{{ temaSelecionado?.titulo }}</h3>
+        @if (temaSelecionado?.problematica) {
+          <p class="text-sm text-slate-600">{{ temaSelecionado?.problematica }}</p>
+        }
+      </div>
+
+      @if (temaSelecionado?.textos_apoio?.length) {
+        <div class="mt-5 grid gap-4 md:grid-cols-2">
+          @for (texto of temaSelecionado.textos_apoio; track texto.titulo) {
+            <article class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+              <p class="text-xs font-semibold uppercase text-slate-500">{{ texto.tipo }}</p>
+              <h4 class="mt-1 text-sm font-semibold text-slate-900">{{ texto.titulo }}</h4>
+              <p class="mt-2 text-sm text-slate-600 whitespace-pre-line">{{ texto.conteudo }}</p>
+              @if (texto.fonte) {
+                <p class="mt-3 text-xs text-slate-500">Fonte: {{ texto.fonte }}</p>
+              }
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  <section class="grid gap-6 lg:grid-cols-[2fr,1fr]">
+    <div class="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-semibold text-slate-700">Tema informado ao corretor</label>
+        <input
+          type="text"
+          placeholder="Use o tema selecionado ou personalize aqui"
+          class="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-900 outline-none focus:border-blue-500"
+          [(ngModel)]="temaPersonalizado"
+        />
+        <span class="text-xs text-slate-500"
+          >Deixe em branco para enviar exatamente o tema selecionado acima.</span
+        >
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-semibold text-slate-700">Texto da redação</label>
+        <textarea
+          pTextarea
+          [rows]="20"
+          class="rounded-2xl border border-slate-300 p-4 text-sm text-slate-900 outline-none focus:border-blue-500"
+          placeholder="Digite aqui sua redação dissertativo-argumentativa..."
+          [(ngModel)]="textoRedacao"
+        ></textarea>
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between text-xs font-medium text-slate-600">
+            <span>{{ totalPalavras }} / {{ maximoPalavras }} palavras</span>
+            <span
+              [class.text-red-600]="totalPalavras < minimoPalavras || totalPalavras > maximoPalavras"
+              [class.text-green-600]="totalPalavras >= minimoPalavras && totalPalavras <= maximoPalavras"
+            >
+              mínimo {{ minimoPalavras }} palavras
+            </span>
+          </div>
+          <div class="h-2 w-full rounded-full bg-slate-100">
+            <div
+              class="h-full rounded-full bg-blue-500 transition-all"
+              [style.width.%]="progressoPalavras"
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      @if (erroCorrecao) {
+        <div class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {{ erroCorrecao }}
+        </div>
+      }
+
+      <div class="flex flex-wrap gap-3">
+        <p-button
+          label="Corrigir redação"
+          icon="pi pi-check-circle"
+          [disabled]="!podeCorrigir()"
+          [loading]="corrigindo"
+          (click)="corrigirRedacao()"
+        />
+        <p-button
+          label="Limpar texto"
+          icon="pi pi-eraser"
+          severity="secondary"
+          text="true"
+          (click)="textoRedacao = ''"
+        />
+      </div>
+    </div>
+
+    <aside class="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <p class="text-sm font-semibold text-slate-700">Checklist da Competência 5</p>
+      <ul class="space-y-2 text-sm text-slate-600">
+        <li>• Defina agente, ação, meio, detalhamento e respeito aos direitos humanos.</li>
+        <li>• Relacione a intervenção ao problema levantado.</li>
+        <li>• Use conectivos e mantenha coesão entre os parágrafos.</li>
+        <li>• Cite dados dos textos de apoio quando pertinente.</li>
+      </ul>
+      <p class="text-sm font-semibold text-slate-700">Dicas rápidas</p>
+      <ul class="space-y-2 text-sm text-slate-600">
+        <li>• Evite primeira pessoa e opiniões extremistas.</li>
+        <li>• Revise ortografia e concordância antes de enviar.</li>
+        <li>• Mencione soluções institucionais, sociais e educacionais.</li>
+      </ul>
+    </aside>
+  </section>
+
+  @if (avaliacao) {
+    <section class="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex flex-col gap-2">
+        <p class="text-sm font-semibold uppercase text-slate-500">Correção concluída</p>
+        <h2 class="text-2xl font-semibold text-slate-900">
+          Nota final: {{ avaliacao?.nota_final }} / 1000
+        </h2>
+        <p class="text-sm text-slate-600">{{ avaliacao?.comentarios_gerais }}</p>
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-2">
+        @for (competencia of avaliacao?.competencias; track competencia.numero) {
+          <article class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+            <div class="flex items-baseline justify-between">
+              <p class="text-xs font-semibold uppercase text-slate-500">
+                Competência {{ competencia.numero }}
+              </p>
+              <span class="text-lg font-semibold" [class]="getClasseNota(competencia.nota)"
+                >{{ competencia.nota }}/200</span
+              >
+            </div>
+            <h4 class="mt-2 text-base font-semibold text-slate-900">{{ competencia.titulo }}</h4>
+            <p class="mt-2 text-sm text-slate-600 whitespace-pre-line">
+              {{ competencia.justificativa }}
+            </p>
+
+            @if (competencia.erros?.length) {
+              <div class="mt-3">
+                <p class="text-xs font-semibold text-slate-500">Erros apontados</p>
+                <ul class="mt-1 list-disc space-y-1 pl-4 text-xs text-slate-600">
+                  @for (erro of competencia.erros; track erro) {
+                    <li>{{ erro }}</li>
+                  }
+                </ul>
+              </div>
+            }
+
+            @if (competencia.trechos_citados?.length) {
+              <div class="mt-3">
+                <p class="text-xs font-semibold text-slate-500">Trechos citados</p>
+                <ul class="mt-1 space-y-1 text-xs text-slate-600">
+                  @for (trecho of competencia.trechos_citados; track trecho) {
+                    <li class="rounded-lg bg-white p-2 shadow-sm">"{{ trecho }}"</li>
+                  }
+                </ul>
+              </div>
+            }
+          </article>
+        }
+      </div>
+
+      @if (avaliacao?.sugestoes?.length) {
+        <div class="rounded-2xl border border-blue-100 bg-blue-50 p-5">
+          <p class="text-sm font-semibold text-blue-700">Sugestões de aprimoramento</p>
+          <ul class="mt-3 space-y-2 text-sm text-blue-900">
+            @for (sugestao of avaliacao.sugestoes; track sugestao) {
+              <li class="flex gap-2">
+                <span>•</span>
+                <span>{{ sugestao }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </section>
+  }
+
+  <section class="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold text-slate-900">Histórico de correções</h2>
+      @if (carregandoHistorico) {
+        <p-progressSpinner styleClass="w-4 h-4" strokeWidth="4" />
+      }
+    </div>
+
+    @if (historico.length === 0 && !carregandoHistorico) {
+      <p class="text-sm text-slate-500">
+        Nenhuma redação corrigida ainda. Gere um tema, escreva sua redação e peça a correção para
+        preencher este histórico.
+      </p>
+    } @else {
+      <div class="grid gap-4 md:grid-cols-2">
+        @for (item of historico; track item.id) {
+          <article class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+            <p class="text-xs font-semibold uppercase text-slate-500">
+              {{ item.created_at | date : 'short' }}
+            </p>
+            <h4 class="mt-2 text-base font-semibold text-slate-900">{{ item.tema }}</h4>
+            <p class="text-sm text-slate-500">
+              Nota {{ item.nota_total }}/1000 • {{ item.total_palavras }} palavras
+            </p>
+            @if (item.comentarios_gerais) {
+              <p class="mt-2 text-sm text-slate-600">{{ item.comentarios_gerais }}</p>
+            }
+          </article>
+        }
+      </div>
+    }
+  </section>
+</div>
+

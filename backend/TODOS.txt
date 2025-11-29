@@ -1,0 +1,18 @@
+retornar conceitos dentro dos tópicos existentes
+
+fix ia & progresso
+
+✓ mudar botoes do filtra habilidade para filtrar por competencia (CONCLUÍDO)
+
+✓ se finaliza sem responder ele não deveria computar (CONCLUÍDO)
+
+✓ filtro por dificuldade (CONCLUÍDO)
+
+✓ estrela conquistada - remover
+
+separar plano de estudo
+
+melhorar relatório PDF
+
+✓ implementar correção de redações
+

@@ -1,0 +1,400 @@
+<div class="space-y-8">
+  <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-800">Relatórios do Estudante</h2>
+      <!-- <p class="text-gray-600 text-sm">
+        Gere um PDF consolidado para compartilhar com professores e responsáveis.
+      </p> -->
+    </div>
+    <p-button
+      label="Exportar relatório (PDF)"
+      icon="pi pi-file-pdf"
+      severity="danger"
+      [loading]="exportandoPdf"
+      (click)="exportarRelatorio()"
+      styleClass="w-full md:w-auto">
+    </p-button>
+  </div>
+
+  <!-- Header com Mensagem Motivacional -->
+  <div *ngIf="mensagemMotivacional" class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 text-white">
+    <div class="flex items-center space-x-4">
+      <div class="text-4xl">{{ mensagemMotivacional.icone }}</div>
+      <div>
+        <h2 class="text-2xl font-bold">{{ mensagemMotivacional.mensagem }}</h2>
+        <p class="text-blue-100">Continue seu progresso rumo ao sucesso no ENEM!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estatísticas Gerais -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+      <div class="flex items-center">
+        <div class="text-3xl mr-4">📊</div>
+        <div>
+          <h3 class="text-2xl font-bold text-gray-800">{{ totalQuestoes }}</h3>
+          <p class="text-gray-600">Questões Respondidas</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+      <div class="flex items-center">
+        <div class="text-3xl mr-4">🎯</div>
+        <div>
+          <h3 class="text-2xl font-bold text-gray-800">{{ taxaAcertoGeral }}%</h3>
+          <p class="text-gray-600">Taxa de Acerto</p>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- Avanço geral por matéria -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-6">
+      <div>
+        <h3 class="text-xl font-bold text-gray-800">📚 Avanço por Matéria</h3>
+        <p class="text-gray-600 text-sm">Resumo rápido do desempenho em cada área do ENEM.</p>
+      </div>
+      <p class="text-sm text-gray-500">
+        Atualizado automaticamente com base nas sessões praticadas.
+      </p>
+    </div>
+
+    <div *ngIf="resumoMateriasCarregando" class="flex justify-center py-8">
+      <p-progressSpinner></p-progressSpinner>
+    </div>
+
+    <div *ngIf="!resumoMateriasCarregando && resumoMaterias.length > 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div
+        *ngFor="let resumo of resumoMaterias"
+        class="border rounded-lg p-4 flex flex-col gap-3 transition-all cursor-pointer focus:outline-none"
+        [class.border-blue-500]="materiaSelecionada === resumo.codigo"
+        [class.shadow-lg]="materiaSelecionada === resumo.codigo"
+        [class.border-gray-200]="materiaSelecionada !== resumo.codigo"
+        tabindex="0"
+        role="button"
+        [attr.aria-pressed]="materiaSelecionada === resumo.codigo"
+        (click)="selecionarMateria(resumo.codigo)"
+        (keyup.enter)="selecionarMateria(resumo.codigo)">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-sm text-gray-500 uppercase tracking-wide">Matéria</p>
+            <h4 class="text-lg font-semibold text-gray-800">{{ resumo.nome }}</h4>
+          </div>
+          <span class="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">
+            {{ resumo.codigo }}
+          </span>
+        </div>
+
+        <ng-container *ngIf="resumo.totalRespondidas > 0; else resumoSemHistorico">
+          <div class="flex items-baseline gap-2">
+            <p class="text-3xl font-bold text-gray-900">{{ resumo.taxaAcerto }}%</p>
+            <span class="text-sm text-gray-500">taxa de acerto</span>
+          </div>
+
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div
+              class="h-2 rounded-full"
+              [style.width.%]="resumo.taxaAcerto"
+              [style.background-color]="getCorTaxaAcerto(resumo.taxaAcerto)">
+            </div>
+          </div>
+
+          <div class="text-sm text-gray-600">
+            <p>{{ resumo.totalRespondidas }} questões respondidas</p>
+            <p class="text-gray-500">{{ resumo.competenciasMonitoradas }} competências monitoradas</p>
+          </div>
+        </ng-container>
+
+        <ng-template #resumoSemHistorico>
+          <div class="flex flex-col gap-2 text-gray-500">
+            <p class="text-sm font-semibold">Sem histórico ainda</p>
+            <span class="text-xs">Resolva questões nesta matéria para acompanhar o progresso.</span>
+          </div>
+        </ng-template>
+
+        <p class="text-xs text-gray-400 mt-auto pt-1">Clique para ver análise detalhada.</p>
+      </div>
+    </div>
+
+    <div *ngIf="!resumoMateriasCarregando && resumoMaterias.length === 0" class="text-center text-sm text-gray-500 py-4">
+      Ainda não há dados suficientes para mostrar o progresso por matéria. Resolva algumas questões para ver o painel completo.
+    </div>
+  </div>
+
+
+  
+  
+  <div *ngIf="!materiaSelecionada && resumoMaterias.length > 0" class="bg-white rounded-lg shadow-md p-6 text-center text-gray-600">
+    Selecione uma matéria nos cards acima para ver a análise detalhada de competências e recomendações.
+  </div>
+
+  <!-- Análise de Progresso -->
+  <div *ngIf="materiaSelecionada" class="bg-white rounded-lg shadow-md p-6">
+    <div class="mb-6">
+      <h3 class="text-xl font-bold text-gray-800">🤖 Análise de Progresso - {{ getNomeMateria(materiaSelecionada) }}</h3>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="carregando" class="text-center py-12">
+      <p-progressSpinner></p-progressSpinner>
+      <p class="mt-4 text-gray-600">Analisando seu progresso...</p>
+    </div>
+
+    <!-- Progresso por Habilidades -->
+    <ng-container *ngIf="progressoHabilidades.length > 0; else semHistoricoHabilidades">
+      <div class="space-y-6">
+        <h4 class="text-lg font-semibold text-gray-800">🎯 Progresso por Habilidades</h4>
+        
+        <!-- Habilidades Prioritárias -->
+        <div *ngIf="getHabilidadesPrioritarias().length > 0" class="space-y-4">
+          <h5 class="text-md font-semibold text-red-600">⚠️ Habilidades que Precisam de Atenção</h5>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div 
+              *ngFor="let habilidade of getHabilidadesPrioritarias()" 
+              class="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div class="flex justify-between items-center mb-2">
+                <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-sm font-semibold">H{{ habilidade.numero }}</span>
+                <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-sm">C{{ habilidade.competencia_numero }}</span>
+              </div>
+              <div class="mb-3">
+                <p class="text-sm text-gray-700">{{ habilidade.descricao }}</p>
+              </div>
+              <div class="space-y-2">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">{{ habilidade.total_questoes }} questões</span>
+                  <span class="font-semibold" [style.color]="getCorTaxaAcerto(habilidade.taxa_acerto)">
+                    {{ habilidade.taxa_acerto }}% {{ getTextoTaxaAcerto(habilidade.taxa_acerto) }}
+                  </span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                  <div class="h-2 rounded-full" 
+                       [style.width.%]="habilidade.taxa_acerto"
+                       [style.background-color]="getCorTaxaAcerto(habilidade.taxa_acerto)">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Habilidades Fortes -->
+        <div *ngIf="getHabilidadesFortes().length > 0" class="space-y-4">
+          <h5 class="text-md font-semibold text-green-600">💪 Suas Habilidades Fortes</h5>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div 
+              *ngFor="let habilidade of getHabilidadesFortes()" 
+              class="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div class="flex justify-between items-center mb-2">
+                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-semibold">H{{ habilidade.numero }}</span>
+                <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-sm">C{{ habilidade.competencia_numero }}</span>
+              </div>
+              <div class="mb-3">
+                <p class="text-sm text-gray-700">{{ habilidade.descricao }}</p>
+              </div>
+              <div class="space-y-2">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">{{ habilidade.total_questoes }} questões</span>
+                  <span class="font-semibold" [style.color]="getCorTaxaAcerto(habilidade.taxa_acerto)">
+                    {{ habilidade.taxa_acerto }}% {{ getTextoTaxaAcerto(habilidade.taxa_acerto) }}
+                  </span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                  <div class="h-2 rounded-full" 
+                       [style.width.%]="habilidade.taxa_acerto"
+                       [style.background-color]="getCorTaxaAcerto(habilidade.taxa_acerto)">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+    <ng-template #semHistoricoHabilidades>
+      <div class="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-6 text-center text-gray-600">
+        Registre ao menos uma sessão nesta matéria para acompanhar o progresso por habilidades da BNCC.
+      </div>
+    </ng-template>
+
+    <!-- Progresso por Competências -->
+    <ng-container *ngIf="progressoCompetencias.length > 0; else semProgressoCompetencias">
+      <div class="space-y-4 mt-10">
+        <h4 class="text-lg font-semibold text-gray-800">📘 Avanço por Competência</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div
+            *ngFor="let competencia of progressoCompetencias"
+            class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <p class="text-sm text-gray-500 uppercase tracking-wide">Competência</p>
+                <h5 class="text-lg font-semibold text-gray-800">C{{ competencia.numero }}</h5>
+              </div>
+              <span class="text-sm text-gray-500 bg-white border border-gray-200 px-2 py-1 rounded">
+                {{ competencia.total_questoes }} questões
+              </span>
+            </div>
+
+            <p class="text-sm text-gray-700 mb-3">{{ competencia.descricao }}</p>
+
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-gray-600">Taxa de acerto</span>
+              <span class="font-semibold" [style.color]="getCorTaxaAcerto(competencia.taxa_acerto)">
+                {{ competencia.taxa_acerto }}%
+              </span>
+            </div>
+
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div
+                class="h-2 rounded-full"
+                [style.width.%]="competencia.taxa_acerto"
+                [style.background-color]="getCorTaxaAcerto(competencia.taxa_acerto)">
+              </div>
+            </div>
+
+            <p class="text-xs text-gray-500 mt-1">{{ competencia.questoes_corretas }} acertos de {{ competencia.total_questoes }} questões</p>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+    <ng-template #semProgressoCompetencias>
+      <div class="mt-10 bg-gray-50 border border-dashed border-gray-300 rounded-lg p-6 text-center text-gray-600">
+        Ainda não há competências monitoradas nesta matéria. Resolva algumas questões para gerar o plano baseado na BNCC.
+      </div>
+    </ng-template>
+
+    <!-- Resultado da Análise -->
+    <div *ngIf="analiseProgresso && !carregando" class="space-y-6 mt-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Análise Geral -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h4 class="font-semibold text-blue-800 mb-2">📈 Análise do Progresso</h4>
+          <p class="text-gray-700">{{ analiseProgresso.analise_progresso }}</p>
+        </div>
+
+        <!-- Meta Semanal -->
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+          <h4 class="font-semibold text-green-800 mb-2">🎯 Meta Semanal</h4>
+          <p class="text-gray-700">{{ analiseProgresso.meta_semanal }}</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Nível de Dificuldade Ideal -->
+        <ng-container *ngIf="temDadosNivelIdeal(); else nivelIdealSemDados">
+          <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <h4 class="font-semibold text-purple-800 mb-2">📊 Nível de Dificuldade Ideal</h4>
+            <div class="space-y-2">
+              <div class="inline-block px-3 py-1 rounded-full text-white text-sm font-semibold" 
+                   [style.background-color]="getNivelDificuldadeCor(analiseProgresso.nivel_dificuldade_ideal)">
+                {{ getNivelDificuldadeTexto(analiseProgresso.nivel_dificuldade_ideal) }}
+              </div>
+              <p class="text-gray-700">Nível {{ (analiseProgresso.nivel_dificuldade_ideal * 100).toFixed(0) }}%</p>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Áreas de Foco -->
+        <div *ngIf="analiseProgresso.areas_foco.length > 0" class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <h4 class="font-semibold text-orange-800 mb-2">🎯 Áreas de Foco</h4>
+          <div class="flex flex-wrap gap-2">
+            <span *ngFor="let area of analiseProgresso.areas_foco" 
+                  class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-sm">
+              {{ area }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <ng-template #nivelIdealSemDados>
+        <div class="bg-purple-50 border border-dashed border-purple-200 rounded-lg p-4">
+          <h4 class="font-semibold text-purple-800 mb-2">📊 Nível de Dificuldade Ideal</h4>
+          <p class="text-purple-900 text-sm">
+            Resolva pelo menos {{ minimoQuestoesNivelIdeal }} questões em {{ getNomeMateria(materiaSelecionada) }} para estimarmos o nível ideal com precisão.
+          </p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Perfil de Aprendizado -->
+  <!-- <div *ngIf="perfilAprendizado && materiaSelecionada" class="bg-white rounded-lg shadow-md p-6">
+    <div class="mb-6">
+      <h3 class="text-xl font-bold text-gray-800">👤 Perfil de Aprendizado - {{ getNomeMateria(materiaSelecionada) }}</h3>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+        <h4 class="font-semibold text-indigo-800 mb-2">📊 Nível Atual</h4>
+        <div class="space-y-2">
+          <div class="inline-block px-3 py-1 rounded-full text-white text-sm font-semibold" 
+               [style.background-color]="getNivelDificuldadeCor(perfilAprendizado.nivel_atual)">
+            {{ getNivelDificuldadeTexto(perfilAprendizado.nivel_atual) }}
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="h-2 rounded-full" 
+                 [style.width.%]="perfilAprendizado.nivel_atual * 100" 
+                 [style.background-color]="getNivelDificuldadeCor(perfilAprendizado.nivel_atual)">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+        <h4 class="font-semibold text-green-800 mb-2">💪 Pontos Fortes</h4>
+        <p class="text-gray-700 text-sm">{{ perfilAprendizado.pontos_fortes }}</p>
+      </div>
+
+      <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <h4 class="font-semibold text-yellow-800 mb-2">📈 Áreas de Melhoria</h4>
+        <p class="text-gray-700 text-sm">{{ perfilAprendizado.pontos_fracos }}</p>
+      </div>
+    </div>
+  </div> -->
+
+  <!-- Recomendações de Estudo -->
+  <div *ngIf="recomendacoes.length > 0" class="bg-white rounded-lg shadow-md p-6">
+    <div class="mb-6">
+      <h3 class="text-xl font-bold text-gray-800">💡 Recomendações Personalizadas</h3>
+    </div>
+    
+    <div class="space-y-4">
+      <div *ngFor="let recomendacao of recomendacoes" class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+        <div class="flex justify-between items-start mb-3">
+          <div class="flex items-center space-x-2">
+            <span class="text-2xl">{{ getTipoRecomendacaoIcone(recomendacao.tipo_recomendacao) }}</span>
+            <span class="font-semibold text-gray-800">{{ recomendacao.tipo_recomendacao | titlecase }}</span>
+          </div>
+          <div class="px-2 py-1 rounded text-white text-xs font-semibold" 
+               [style.background-color]="getPrioridadeCor(recomendacao.prioridade)">
+            {{ getPrioridadeTexto(recomendacao.prioridade) }}
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <p class="text-gray-700">{{ recomendacao.conteudo }}</p>
+        </div>
+        
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-gray-500">{{ formatarData(recomendacao.data_criacao) }}</span>
+          <p-button 
+            label="Marcar como Visualizada" 
+            icon="pi pi-check" 
+            size="small"
+            severity="success"
+            (click)="marcarRecomendacaoComoVisualizada(recomendacao.id)">
+          </p-button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensagem quando não há recomendações -->
+  <div *ngIf="recomendacoes.length === 0" class="bg-white rounded-lg shadow-md p-6 text-center">
+    <div class="text-6xl mb-4">🎉</div>
+    <h3 class="text-xl font-bold text-gray-800 mb-2">Parabéns!</h3>
+    <p class="text-gray-600">Você visualizou todas as suas recomendações. Continue estudando para receber novas sugestões personalizadas!</p>
+  </div>
+</div>

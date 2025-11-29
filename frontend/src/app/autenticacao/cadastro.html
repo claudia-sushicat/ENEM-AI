@@ -1,0 +1,31 @@
+<div class="min-h-screen p-2 fixed inset-0 flex items-center justify-center z-50 bg-gray-100">
+
+    <div class="popup-container bg-white rounded-2xl shadow-2xl p-8 flex flex-col items-center justify-center gap-4 max-w-md w-xl">
+        <img src="img/logo.png" alt="Logo" class="w-52 h-40" />
+        <label style="font-family: 'Press Start 2P';" class="mb-4">ENEM.AI</label>
+
+        <form (ngSubmit)="onSubmit()" class="w-full flex flex-col gap-4">
+            <input pInputText type="text" placeholder="Nome completo" [(ngModel)]="nome" name="nome" class="w-full" required />
+            <input pInputText type="email" placeholder="Email" [(ngModel)]="email" name="email" class="w-full" required />
+            <input pInputText type="password" placeholder="Senha (mín. 6 caracteres)" [(ngModel)]="senha" name="senha" class="w-full" required />
+            <input pInputText type="password" placeholder="Confirmar senha" [(ngModel)]="confirmarSenha" name="confirmarSenha" class="w-full" required />
+            
+            <!-- Mensagens de erro e sucesso -->
+            <p-message *ngIf="erro" severity="error" [text]="erro" styleClass="w-full"></p-message>
+            <p-message *ngIf="sucesso" severity="success" [text]="sucesso" styleClass="w-full"></p-message>
+            
+            <p-button 
+                type="submit"
+                label="Cadastrar" 
+                icon="pi pi-user-plus" 
+                [loading]="carregando"
+                styleClass="w-full" />
+        </form>
+        
+        <a (click)="irParaLogin()" class="text-md text-gray-500 cursor-pointer hover:text-blue-600">
+            Já tem uma conta? Fazer login
+        </a>
+    </div>
+
+</div>
+

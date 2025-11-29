@@ -1,0 +1,45 @@
+<div class="min-h-screen bg-gray-50">
+    <!-- Menu lateral -->
+    <div class="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-40" style="margin-top: 60px;">
+        <div class="p-6 border-b border-gray-200">
+            <div class="text-center">
+                <img src="img/logo.png" alt="ENEM.AI Logo" class="w-30 h-22 mx-auto mb-3" />
+                <h2 class="text-xl font-bold text-gray-800">ENEM.AI</h2>
+            </div>
+        </div>
+        
+        <div class="flex flex-col gap-4 p-4">
+            <p-button 
+                label="Estudar" 
+                icon="pi pi-book" 
+                styleClass="w-full !justify-start" 
+                text="true" 
+                routerLink="/painel-usuario" />
+            
+            <p-button 
+                label="IA & Progresso" 
+                icon="pi pi-microchip-ai" 
+                styleClass="w-full !justify-start" 
+                text="true" 
+                routerLink="/painel-usuario/dashboard-ia" />
+
+            <!-- <p-button 
+                label="Redação ENEM" 
+                icon="pi pi-pencil" 
+                styleClass="w-full !justify-start" 
+                text="true" 
+                routerLink="/painel-usuario/redacao" /> -->
+            
+            <!-- <p-button 
+                label="Plano de Estudos" 
+                icon="pi pi-check-square" 
+                styleClass="w-full !justify-start" 
+                text="true" /> -->
+        </div>
+    </div>
+
+    <!-- Conteúdo principal -->
+    <div class="ml-64 p-6 pt-20">
+        <router-outlet></router-outlet>
+    </div>
+</div>

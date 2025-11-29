@@ -1,0 +1,32 @@
+<div class="fixed inset-0 flex items-center justify-center z-50 bg-gray-100">
+
+    <div class="w-xl popup-container bg-white rounded-2xl shadow-2xl p-8 flex flex-col items-center justify-center gap-4 max-w-md">
+        <img src="img/logo.png" alt="Logo" class="w-52 h-40" />
+        <label style="font-family: 'Press Start 2P';" class="mb-4">ENEM.AI</label>
+        
+        <form (ngSubmit)="onSubmit()" class="w-full flex flex-col gap-4">
+            <input pInputText type="email" placeholder="Email" [(ngModel)]="email" name="email" class="w-full" required />
+            <input pInputText type="password" placeholder="Senha" [(ngModel)]="senha" name="senha" class="w-full" required />
+            
+            <!-- Mensagem de erro -->
+            <p-message *ngIf="erro" severity="error" [text]="erro" styleClass="w-full"></p-message>
+            
+            <p-button 
+                type="submit"
+                label="Entrar" 
+                icon="pi pi-sign-in" 
+                [loading]="carregando"
+                styleClass="w-full" />
+        </form>
+        
+        <div class="w-full flex flex-col gap-2 text-center">
+            <a (click)="irParaEsqueciSenha()" class="text-sm text-gray-500 cursor-pointer hover:text-blue-600">
+                Esqueci minha senha
+            </a>
+            <a (click)="irParaCadastro()" class="text-md text-gray-500 cursor-pointer hover:text-blue-600">
+                Não tem uma conta? Fazer cadastro
+            </a>
+        </div>
+    </div>
+
+</div>

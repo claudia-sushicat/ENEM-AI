@@ -1,0 +1,320 @@
+<div class="max-w-4xl mx-auto p-6">
+  <!-- Overlay de carregamento da correção -->
+  <div 
+    *ngIf="aguardandoCorrecao" 
+    class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-transparent"
+    role="alertdialog"
+    aria-live="assertive">
+    <div class="bg-white rounded-2xl shadow-2xl px-10 py-8 text-center space-y-4 max-w-sm mx-auto">
+      <p-progressSpinner></p-progressSpinner>
+      <div class="space-y-1">
+        <p class="text-lg font-semibold text-gray-800">Analisando sua resposta</p>
+        <p class="text-sm text-gray-600">A IA está avaliando e preparando o feedback personalizado.</p>
+      </div>
+    </div>
+  </div>
+  <!-- Loading -->
+  <div *ngIf="carregando || iniciandoSessao" class="text-center py-12">
+    <p-progressSpinner></p-progressSpinner>
+    <p class="mt-4 text-gray-600">{{ iniciandoSessao ? 'Iniciando sessão de estudo...' : 'Carregando...' }}</p>
+  </div>
+
+  <!-- Mensagem quando não há questões -->
+  <div *ngIf="materiaSelecionada && nenhumaQuestaoEncontrada && !carregando" class="text-center py-12">
+    <div class="bg-white rounded-lg shadow-md p-8 max-w-2xl mx-auto">
+      <div class="mb-6">
+        <svg class="mx-auto h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-800 mb-4">Nenhuma questão encontrada</h3>
+      <p class="text-gray-600 mb-6">
+        Não existem questões na base de dados que satisfazem os filtros aplicados.
+      </p>
+      <div class="space-y-3">
+        <p class="text-sm text-gray-500">Tente:</p>
+        <ul class="text-sm text-gray-600 space-y-2">
+          <li *ngIf="competenciaSelecionada">• Remover o filtro de competência</li>
+          <li *ngIf="dificuldadeSelecionada">• Alterar o nível de dificuldade</li>
+          <li>• Escolher outra combinação de filtros</li>
+        </ul>
+      </div>
+      <div class="mt-6 flex gap-3 justify-center">
+        <p-button 
+          *ngIf="competenciaSelecionada"
+          label="Limpar Filtro de Competência" 
+          icon="pi pi-times" 
+          severity="secondary"
+          (click)="limparFiltroCompetencia()" />
+        <p-button 
+          *ngIf="dificuldadeSelecionada"
+          label="Limpar Filtro de Dificuldade" 
+          icon="pi pi-times" 
+          severity="secondary"
+          (click)="limparFiltroDificuldade()" />
+        <p-button 
+          label="Finalizar Sessão" 
+          icon="pi pi-stop" 
+          severity="danger"
+          (click)="finalizarSessao()" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Interface de Questões -->
+  <div *ngIf="materiaSelecionada && questaoAtual && !carregando" class="space-y-6">
+    <!-- Header da Sessão -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold text-gray-800">{{ getNomeMateria(materiaSelecionada) }}</h2>
+        <p-button 
+          label="Finalizar Sessão" 
+          icon="pi pi-stop" 
+          severity="danger" 
+          (click)="finalizarSessao()" />
+      </div>
+      
+      <div class="grid grid-cols-3 gap-4 text-center">
+        <div class="bg-blue-50 rounded-lg p-3">
+          <p class="text-sm text-gray-600">Tempo</p>
+          <p class="font-semibold">{{ getTempoDecorrido() }}</p>
+        </div>
+        <div class="bg-green-50 rounded-lg p-3">
+          <p class="text-sm text-gray-600">Questão</p>
+          <p class="font-semibold">{{ questaoIndex + 1 }} / {{ questoes.length }}</p>
+        </div>
+        <div class="bg-purple-50 rounded-lg p-3">
+          <p class="text-sm text-gray-600">Acertos</p>
+          <p class="font-semibold">{{ getPercentualAcerto() }}%</p>
+        </div>
+      </div>
+      
+      <!-- Botões de Filtro -->
+      <div class="mt-4 flex flex-col gap-3">
+        <!-- Filtro por Competência -->
+        <div class="flex justify-center">
+          <p-button 
+            label="Filtrar por Competência" 
+            icon="pi pi-filter" 
+            severity="secondary"
+            text="true"
+            (click)="mostrandoFiltros = !mostrandoFiltros" />
+        </div>
+        
+        <!-- Filtro por Dificuldade -->
+        <div class="flex justify-center items-center gap-2">
+          <span class="text-sm text-gray-600 font-semibold">Dificuldade:</span>
+          <div class="flex gap-2">
+            <button
+              *ngFor="let opcao of opcoesDificuldade"
+              class="px-3 py-1 rounded-lg text-sm font-semibold transition-all"
+              [class.bg-blue-500]="dificuldadeSelecionada === opcao.value"
+              [class.text-white]="dificuldadeSelecionada === opcao.value"
+              [class.bg-gray-200]="dificuldadeSelecionada !== opcao.value"
+              [class.text-gray-700]="dificuldadeSelecionada !== opcao.value"
+              [class.hover:bg-blue-600]="dificuldadeSelecionada === opcao.value"
+              [class.hover:bg-gray-300]="dificuldadeSelecionada !== opcao.value"
+              (click)="selecionarDificuldade(opcao.value)">
+              {{ opcao.label }}
+            </button>
+            <button
+              *ngIf="dificuldadeSelecionada"
+              class="px-3 py-1 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-all"
+              (click)="limparFiltroDificuldade()">
+              Limpar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtros de Competências -->
+    <div *ngIf="mostrandoFiltros" class="bg-white rounded-lg shadow-md p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">Filtrar por Competência</h3>
+        <p-button 
+          *ngIf="competenciaSelecionada"
+          label="Limpar Filtro" 
+          icon="pi pi-times" 
+          severity="danger"
+          size="small"
+          (click)="limparFiltroCompetencia()" />
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div 
+          *ngFor="let competencia of competencias" 
+          class="p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md"
+          [class.bg-blue-50]="competenciaSelecionada === competencia.id"
+          [class.border-blue-500]="competenciaSelecionada === competencia.id"
+          [class.bg-gray-50]="competenciaSelecionada !== competencia.id"
+          [class.border-gray-200]="competenciaSelecionada !== competencia.id"
+          (click)="selecionarCompetencia(competencia.id)">
+          
+          <div class="flex justify-between items-center mb-3">
+            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded text-base font-semibold">Competência {{ competencia.numero }}</span>
+          </div>
+          
+          <div class="mb-3">
+            <p class="text-sm text-gray-700">{{ competencia.descricao }}</p>
+          </div>
+          
+          <ng-container *ngIf="getProgressoCompetencia(competencia.id) as progresso; else semHistorico">
+            <div *ngIf="progresso.total_questoes > 0; else semHistorico" class="space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">{{ progresso.total_questoes }} questões respondidas</span>
+                <span class="font-semibold" [style.color]="getCorTaxaAcerto(progresso.taxa_acerto)">
+                  {{ progresso.taxa_acerto }}% {{ getTextoTaxaAcerto(progresso.taxa_acerto) }}
+                </span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="h-2 rounded-full" 
+                     [style.width.%]="progresso.taxa_acerto"
+                     [style.background-color]="getCorTaxaAcerto(progresso.taxa_acerto)">
+                </div>
+              </div>
+            </div>
+          </ng-container>
+          
+          <ng-template #semHistorico>
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">0 questões respondidas</span>
+                <span class="text-gray-500">Ainda não praticada</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="h-2 rounded-full bg-gray-400" style="width: 0%"></div>
+              </div>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Questão -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="mb-6">
+        <div class="flex justify-between items-center mb-4">
+          <span class="text-lg font-semibold text-gray-800">Questão {{ questaoIndex + 1 }}</span>
+          <div class="flex gap-4 text-sm text-gray-600">
+            <span>Dificuldade: {{ questaoAtual.dificuldade.toFixed(1) }}</span>
+            <span>{{ questaoAtual.lingua }}</span>
+          </div>
+        </div>
+        
+        <div *ngIf="questaoAtual.habilidade_descricao" class="bg-gray-50 rounded-lg p-4 mb-4 w-full flex flex-row gap-4">
+          <div class="flex flex-col gap-2">
+            <p-tag severity="success" value="Competência" />
+            <p class="text-sm text-gray-600 mb-2">{{ questaoAtual.competencia_descricao }}</p>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <p-tag severity="success" value="Habilidade" />
+            <p class="text-sm text-gray-600">{{ questaoAtual.habilidade_descricao }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <p class="text-gray-800 leading-relaxed" [innerHTML]="questaoAtual.enunciado"></p>
+      </div>
+
+      <!-- Imagem da Questão -->
+      <div *ngIf="temImagemQuestao(questaoAtual)" class="mb-6 text-center">
+        <img [src]="getImagemQuestao(questaoAtual)" 
+             [alt]="'Imagem da questão ' + (questaoIndex + 1)"
+             class="max-w-full h-auto rounded-lg shadow-sm cursor-pointer"
+             (error)="onImageError($event)"
+             (click)="abrirZoomImagem($event)">
+        <!-- <p class="text-sm text-gray-500 mt-2">Clique para ampliar</p> -->
+      </div>
+
+      <!-- Alternativas -->
+      <div *ngIf="!mostrandoResultado" class="space-y-3 mb-6">
+        <div 
+          *ngFor="let i of [0, 1, 2, 3, 4]"
+          class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+          [class.bg-blue-50]="respostaSelecionada === getLetraAlternativa(i)"
+          [class.border-blue-500]="respostaSelecionada === getLetraAlternativa(i)"
+          (click)="respostaSelecionada = getLetraAlternativa(i)">
+          <span class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-sm font-semibold mr-4">
+            {{ getLetraAlternativa(i) }}
+          </span>
+          <span class="text-gray-800" [innerHTML]="getAlternativa(questaoAtual, i)"></span>
+        </div>
+      </div>
+
+      <!-- Resultado -->
+      <div *ngIf="mostrandoResultado && resultado" class="space-y-4 mb-6">
+        <div class="p-4 rounded-lg" 
+             [class.bg-green-50]="resultado.correta" 
+             [class.bg-red-50]="!resultado.correta">
+          <h3 class="font-semibold" 
+              [class.text-green-800]="resultado.correta" 
+              [class.text-red-800]="!resultado.correta">
+            {{ resultado.mensagem }}
+          </h3>
+        </div>
+        
+        <div *ngIf="!resultado.correta" class="bg-yellow-50 p-4 rounded-lg">
+          <p class="text-gray-800"><strong>Resposta correta:</strong> {{ resultado.resposta_correta }})</p>
+        </div>
+
+        <!-- Feedback de IA -->
+        <div *ngIf="resultado.feedback_ia" class="bg-blue-50 rounded-lg p-4">
+          <h4 class="font-semibold text-blue-800 mb-3">🤖 Feedback Personalizado</h4>
+          <div class="space-y-3 text-sm">
+            <p class="text-gray-700">{{ resultado.feedback_ia.feedback }}</p>
+            
+            <div>
+              <h5 class="font-semibold text-gray-800 mb-1">📚 Explicação da Resposta Correta:</h5>
+              <p class="text-gray-700">{{ resultado.feedback_ia.explicacao_correta }}</p>
+            </div>
+            
+            <div *ngIf="resultado.feedback_ia.conceitos_revisar.length > 0">
+              <h5 class="font-semibold text-gray-800 mb-1">🎯 Conceitos para Revisar:</h5>
+              <ul class="list-disc list-inside text-gray-700">
+                <li *ngFor="let conceito of resultado.feedback_ia.conceitos_revisar">{{ conceito }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botões de Navegação -->
+      <div class="flex justify-between">
+        <p-button 
+          label="Anterior" 
+          icon="pi pi-arrow-left" 
+          [disabled]="questaoIndex === 0"
+          (click)="questaoAnterior()" />
+        
+        <p-button 
+          *ngIf="!mostrandoResultado"
+          label="Responder" 
+          icon="pi pi-check" 
+          [disabled]="!respostaSelecionada"
+          (click)="submeterResposta()" />
+        
+        <p-button 
+          *ngIf="mostrandoResultado"
+          label="Próxima" 
+          icon="pi pi-arrow-right" 
+          [disabled]="questaoIndex === questoes.length - 1"
+          (click)="proximaQuestao()" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Zoom da Imagem -->
+  <p-dialog 
+    *ngIf="mostrandoZoomImagem" 
+    [(visible)]="mostrandoZoomImagem" 
+    [modal]="true" 
+    [closable]="true"
+    [style]="{width: '90vw', height: '90vh'}">
+    <img [src]="imagemZoomUrl" 
+         [alt]="'Imagem ampliada da questão ' + (questaoIndex + 1)" 
+         class="w-full h-full object-contain">
+  </p-dialog>
+</div>
