@@ -270,6 +270,23 @@
               <h5 class="font-semibold text-gray-800 mb-1">📚 Explicação da Resposta Correta:</h5>
               <p class="text-gray-700">{{ resultado.feedback_ia.explicacao_correta }}</p>
             </div>
+
+            <div *ngIf="resultado.feedback_ia.motivo_erro">
+              <h5 class="font-semibold text-gray-800 mb-1">🧩 Por que você errou:</h5>
+              <p class="text-gray-700">{{ resultado.feedback_ia.motivo_erro }}</p>
+            </div>
+
+            <div *ngIf="resultado.feedback_ia.ponto_confusao">
+              <h5 class="font-semibold text-gray-800 mb-1">⚠️ Pontos de confusão:</h5>
+              <p class="text-gray-700">{{ resultado.feedback_ia.ponto_confusao }}</p>
+            </div>
+
+            <div *ngIf="resultado.feedback_ia.passos_revisao?.length">
+              <h5 class="font-semibold text-gray-800 mb-1">📝 Como evitar repetir o erro:</h5>
+              <ul class="list-decimal list-inside text-gray-700 space-y-1">
+                <li *ngFor="let passo of resultado.feedback_ia.passos_revisao">{{ passo }}</li>
+              </ul>
+            </div>
             
             <div *ngIf="resultado.feedback_ia.conceitos_revisar.length > 0">
               <h5 class="font-semibold text-gray-800 mb-1">🎯 Conceitos para Revisar:</h5>

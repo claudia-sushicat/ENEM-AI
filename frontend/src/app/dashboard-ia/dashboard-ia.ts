@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -44,7 +44,6 @@ interface PerfilAprendizado {
   nivel_atual: number;
   pontos_fortes: string;
   pontos_fracos: string;
-  estilo_aprendizado: string;
   ultima_atualizacao: string;
 }
 
@@ -55,6 +54,13 @@ interface ResumoMateria {
   totalCorretas: number;
   taxaAcerto: number;
   competenciasMonitoradas: number;
+}
+
+interface ProgressoGeral {
+  totalQuestoes: number;
+  questoesDistintas: number;
+  corretas: number;
+  taxaAcertoGeral: number;
 }
 
 @Component({
@@ -83,15 +89,16 @@ export class DashboardIAComponent implements OnInit {
   
   // Estatísticas gerais
   totalQuestoes: number = 0;
+  totalQuestoesDistintas: number = 0;
   taxaAcertoGeral: number = 0;
 
-  constructor(
-    private authService: AuthService,
-    private http: HttpClient,
-    private cdr: ChangeDetectorRef,
-    private habilidadesService: HabilidadesService,
-    private relatorioPdfService: RelatorioPdfService
-  ) {
+  private authService = inject(AuthService);
+  private http = inject(HttpClient);
+  private cdr = inject(ChangeDetectorRef);
+  private habilidadesService = inject(HabilidadesService);
+  private relatorioPdfService = inject(RelatorioPdfService);
+
+  constructor() {
     this.usuario = this.authService.getUsuarioAtual();
     this.authService.usuario$
       .pipe(takeUntilDestroyed())
@@ -155,23 +162,19 @@ export class DashboardIAComponent implements OnInit {
       'Authorization': `Bearer ${this.authService.getToken()}`
     });
 
-    // Buscar estatísticas das sessões
-    this.http.get<{sessoes: any[]}>('http://localhost:3000/api/sessoes?limite=100', {
+    this.http.get<ProgressoGeral>('http://localhost:3000/api/progresso-geral', {
       headers
     })
     .subscribe({
-      next: (data) => {
-        const sessoes = data.sessoes;
-        this.totalQuestoes = sessoes.reduce((total: number, sessao: any) => total + sessao.total_questoes, 0);
-        
-        if (this.totalQuestoes > 0) {
-          const totalCorretas = sessoes.reduce((total: number, sessao: any) => total + sessao.questoes_corretas, 0);
-          this.taxaAcertoGeral = Math.round((totalCorretas / this.totalQuestoes) * 100);
-        }
+      next: (progresso) => {
+        this.totalQuestoes = progresso.totalQuestoes ?? 0;
+        this.totalQuestoesDistintas = progresso.questoesDistintas ?? progresso.totalQuestoes ?? 0;
+        const taxa = progresso.taxaAcertoGeral ?? 0;
+        this.taxaAcertoGeral = Math.round(taxa * 10) / 10;
         this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Erro ao carregar estatísticas:', error);
+        console.error('Erro ao carregar estatísticas gerais:', error);
       }
     });
   }
@@ -440,8 +443,17 @@ export class DashboardIAComponent implements OnInit {
       .slice(0, 5);
   }
 
+  podeExportarRelatorio(): boolean {
+    return !!(
+      this.materiaSelecionada &&
+      !this.carregando &&
+      this.analiseProgresso &&
+      this.usuario
+    );
+  }
+
   async exportarRelatorio() {
-    if (this.exportandoPdf) {
+    if (this.exportandoPdf || !this.podeExportarRelatorio()) {
       return;
     }
 
@@ -499,8 +511,7 @@ export class DashboardIAComponent implements OnInit {
             nivelAtual: this.perfilAprendizado.nivel_atual,
             nivelAtualTexto: this.getNivelDificuldadeTexto(this.perfilAprendizado.nivel_atual),
             pontosFortes: this.perfilAprendizado.pontos_fortes,
-            pontosFracos: this.perfilAprendizado.pontos_fracos,
-            estilo: this.perfilAprendizado.estilo_aprendizado
+            pontosFracos: this.perfilAprendizado.pontos_fracos
           }
         : undefined,
       habilidadesPrioritarias: this.getHabilidadesPrioritarias().map(habilidade => ({

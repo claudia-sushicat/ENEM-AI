@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { AuthService } from './auth.service';
 
 export interface Competencia {
   id: number;
@@ -60,6 +61,7 @@ export interface QuestaoComHabilidade {
 })
 export class HabilidadesService {
   private readonly API_URL = 'http://localhost:3000/api';
+  private readonly authService = inject(AuthService);
 
   constructor(private http: HttpClient) {}
 
@@ -127,7 +129,7 @@ export class HabilidadesService {
 
   // Obter token do localStorage
   private getToken(): string | null {
-    return localStorage.getItem('auth_token');
+    return this.authService.getToken();
   }
 
   // Mapear códigos de matéria para nomes amigáveis

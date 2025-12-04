@@ -11,6 +11,7 @@
       icon="pi pi-file-pdf"
       severity="danger"
       [loading]="exportandoPdf"
+      [disabled]="!podeExportarRelatorio()"
       (click)="exportarRelatorio()"
       styleClass="w-full md:w-auto">
     </p-button>
